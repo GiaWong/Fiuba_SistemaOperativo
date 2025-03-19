@@ -3,7 +3,7 @@
 El **sistema operativo** es todo el software que gestiona la computadora, pero su parte más importante es el **kernel**.  
 El **kernel** es el "corazón" del sistema operativo, es la parte que **controla directamente el hardware** y gestiona los recursos (memoria, CPU, discos, etc.).  
 
-Imaginá que el sistema operativo es **un auto** 🚗:  
+Imaginá que el sistema operativo es **un auto** :  
 - **El kernel es el motor**: Es la parte más importante, pero no la ves directamente.  
 - **Las aplicaciones son los pasajeros**: Piden cosas (como moverse o acelerar), pero no manejan directamente el motor.  
 - **El sistema operativo es todo el auto**: Conduce y gestiona todo el sistema para que los pasajeros lleguen a su destino.  
