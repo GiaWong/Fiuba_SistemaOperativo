@@ -77,14 +77,14 @@ Pensá en dos personas que trabajan juntas en una empresa y necesitan pasarse in
 **Sin interacción:** Los programas trabajarían de manera aislada, sin poder compartir datos.  
 **Con interacción:** Se pueden integrar y coordinar mejor.  
 
----
+
 
 ### Recordá siempre:  
 - **Multiplexación:** El SO **comparte los recursos** entre programas sin que uno bloquee a los demás.  
 - **Aislamiento:** Cada programa tiene su propio espacio protegido **para evitar que interfieran entre sí**.  
 - **Interacción:** Permite que los programas **se comuniquen de forma segura** para trabajar en conjunto.  
 
----
+
 
 ### ¿Qué es un proceso?
 Un **proceso** es un **programa en ejecución**. Es decir, cuando abrís una aplicación (como un navegador o un editor de texto), el sistema operativo **crea un proceso** para ese programa.  
@@ -574,7 +574,7 @@ Imaginá que en un edificio hay **tres buzones de correo** donde llegan cartas:
 
 Ahora, imagina que queremos hacer **copias o redirigir estos buzones** a otro lugar.  
 
----
+
 
 ###  `dup()` – Hacer una copia automática de un buzón  
  `dup(fd)` **duplica un buzón en otro vacío automáticamente**. Ejemplo:  
@@ -673,7 +673,7 @@ Este mensaje se guardará en output.txt
 ```
 Ya no se imprime en la pantalla, sino en el archivo.  
 
----
+
 
 ###  Diferencias clave entre `dup()` y `dup2()`
 | **Función** | **¿Qué hace?** | **Ejemplo** |
