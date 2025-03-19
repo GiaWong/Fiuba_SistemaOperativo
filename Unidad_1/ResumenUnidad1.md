@@ -130,7 +130,7 @@ Un proceso pasa por **varios estados** durante su vida:
 - Si está cargando una página, queda en **Waiting** mientras recibe los datos de Internet.  
 - Cuando cerrás el navegador, pasa a **Terminated** y libera la memoria.  
 
-📌 **Diagrama de estados de un proceso:**  
+ **Diagrama de estados de un proceso:**  
 ```
    [Nuevo] ---> [Listo] ---> [Ejecutando] ---> [Terminado]
                       \----> [Esperando] -----/
@@ -148,7 +148,7 @@ Un proceso tiene varias partes:
 -  **Registros de CPU** → Contienen datos temporales y el contador de instrucciones (PC, que dice qué línea de código se ejecuta).  
 - **File Descriptors** → Referencias a archivos abiertos por el proceso.  
 
-📌 **Diagrama de memoria de un proceso:**  
+ **Diagrama de memoria de un proceso:**  
 ```
  +-------------------+
  | Código           |  ← Código del programa
@@ -219,5 +219,133 @@ Aquí se ve cómo el proceso padre crea un **proceso hijo**, y ambos imprimen su
 
 **Ejemplo práctico:**  
 Cada pestaña de tu navegador es un **proceso separado**, para que si una falla, no cierre todo el navegador.  
+
+---
+
+
+# File Descriptors y Process Table 
+Ahora vamos a ver dos conceptos clave en la gestión de procesos:  
+
+- **File Descriptor (FD)** → Maneja archivos y recursos en un proceso.  
+- **Process Table** → Es la estructura del kernel que almacena información de cada proceso.  
+
+
+### File Descriptors (FD)  
+**¿Qué es un File Descriptor?**  
+Un **File Descriptor (FD)** es un número entero que el **sistema operativo asigna a un archivo o recurso** cuando un proceso lo abre.  
+- Es como un "ticket" o "identificador" para acceder al recurso.  
+- No solo sirve para archivos, sino también para **sockets, pipes, dispositivos de entrada/salida (I/O)**, etc.  
+ 
+Imaginá que entrás a un cine . Cuando comprás un boleto, te asignan un número de asiento.  
+- **El cine** → Es el sistema operativo.  
+- **El asiento** → Es el archivo o recurso.  
+- **El número de asiento (FD)** → Es el identificador que usás para acceder al asiento.  
+
+Así funciona un FD: cuando un programa abre un archivo, el SO le da un número (File Descriptor) para que lo use.  
+
+
+
+### ¿Cómo funcionan los File Descriptors? 
+Cada proceso tiene una **File Descriptor Table** que guarda todos los archivos y recursos abiertos por ese proceso.  
+
+ **File Descriptors estándar**  
+Cada proceso tiene **tres FD iniciales** que siempre existen:  
+| FD | Nombre | Descripción |
+|----|--------|------------|
+| 0  | **stdin** | Entrada estándar (teclado) |
+| 1  | **stdout** | Salida estándar (pantalla) |
+| 2  | **stderr** | Salida de errores estándar (pantalla) |
+
+Si ejecutás en la terminal:  
+```bash
+echo "Hola" > salida.txt
+```
+ **¿Qué hace esto?**  
+1. `echo "Hola"` → Escribe "Hola" en **stdout (FD = 1)**.  
+2. `>` → Redirige la salida **de stdout a un archivo**.  
+3. `salida.txt` → Se asigna a un nuevo **File Descriptor** en la File Descriptor Table del proceso.  
+
+- **Con esto, stdout en lugar de imprimir en pantalla, escribe en el archivo**  
+
+📌 **Comprobación en C**  
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+int main() {
+    int fd = open("salida.txt", O_CREAT | O_WRONLY, 0644);
+    dup2(fd, 1);  // Redirigimos stdout (FD=1) al archivo
+
+    printf("Este texto se guardará en salida.txt\n");
+    close(fd);
+    return 0;
+}
+```
+- **Aquí `stdout` ya no imprime en pantalla, sino en `salida.txt`!**  
+
+
+
+### Process Table (Tabla de Procesos)  
+**¿Qué es la Process Table?**  
+Es una **estructura del kernel** que **almacena información sobre todos los procesos activos** en el sistema.  
+
+**¿Para qué sirve?**  
+El sistema operativo usa esta tabla para:  
+- Identificar cada proceso (**PID**).  
+- Asignar recursos como **memoria, CPU y archivos abiertos**.  
+- Saber en qué **estado** está cada proceso (**listo, ejecutando, esperando, terminado**).  
+
+ **¿Cómo funciona?**  
+Cada vez que se ejecuta un programa, el SO:  
+1. **Crea una nueva entrada en la Process Table.**  
+2. **Asigna un PID (Process ID).**  
+3. **Le da recursos (memoria, CPU, archivos abiertos).**  
+4. **Lo agrega a la lista de procesos en ejecución.**  
+
+ **Ejemplo visual de Process Table**  
+| PID | Nombre | Estado | Memoria | File Descriptors |
+|-----|--------|--------|---------|-----------------|
+| 1001 | Chrome | Running | 120MB | 3 archivos abiertos |
+| 1002 | VSCode | Waiting | 200MB | 5 archivos abiertos |
+| 1003 | Terminal | Ready | 50MB | 2 archivos abiertos |
+
+---
+
+### Relación entre File Descriptors y Process Table 
+**¿Cómo se conectan?**  
+Cada **proceso** tiene su propia **tabla de File Descriptors**, y esta tabla es administrada dentro de la **Process Table** del sistema.  
+
+**Ejemplo:**  
+1. Abrís **tres archivos** en un editor de texto → Se crean **tres File Descriptors**.  
+2. Cada uno se almacena en la **File Descriptor Table** del proceso.  
+3. El proceso tiene una entrada en la **Process Table** con esos FD asociados.  
+
+ **Diagrama de relación**  
+```
+Process Table  
+┌───────────────┐  
+│ PID = 1001    │  → File Descriptor Table  
+│ Estado: Run   │  ┌───────────────┐  
+│ Memoria: 120MB│  │ FD 0 → stdin  │  
+│ FD Table:     │  │ FD 1 → stdout │  
+│               │  │ FD 2 → stderr │  
+│               │  │ FD 3 → archivo.txt │  
+└───────────────┘  └───────────────┘  
+```
+ **Así es como el SO gestiona archivos y procesos juntos.**  
+
+
+
+### Acomodando los conceptos queda:  
+- **File Descriptor (FD):**  
+  - Número que identifica archivos abiertos por un proceso.  
+  - Permite acceder a **archivos, sockets, pipes y dispositivos I/O**.  
+  - Cada proceso tiene su propia **File Descriptor Table**.  
+
+- **Process Table:**  
+  - **Estructura del kernel** que almacena información de **todos los procesos activos**.  
+  - Guarda datos como **PID, memoria usada, estado y File Descriptors abiertos**.  
+  - Es usada por el sistema operativo para **gestionar y planificar procesos**.  
 
 ---
