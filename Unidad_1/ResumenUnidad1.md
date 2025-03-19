@@ -349,3 +349,368 @@ Process Table
   - Es usada por el sistema operativo para **gestionar y planificar procesos**.  
 
 ---
+### System Calls más importantes
+Los system calls permiten a los programas solicitar servicios del sistema operativo.
+
+
+## `fork()` – Crear un nuevo proceso  
+ **¿Qué hace?**  
+`fork()` crea un **proceso hijo** idéntico al proceso padre, pero con un **nuevo PID**. Ambos procesos ejecutan el mismo código, pero con PIDs diferentes.  
+
+ **Para entenderlo mejor imaginá: Clonar un chef en la cocina 👨‍🍳👨‍🍳**  
+- Imagina que hay **un solo chef** en un restaurante, cocinando platos.  
+- De repente, el chef **clona una copia exacta de sí mismo**. Ahora hay **dos chefs trabajando al mismo tiempo**, pero con pequeñas diferencias (uno puede empezar a hacer postres mientras el otro sigue con los platos principales).  
+
+ **Ejemplo en C**  
+```c
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+    int pid = fork();  // Se crea un proceso hijo
+
+    if (pid == 0) {  
+        printf("Soy el proceso hijo con PID: %d\n", getpid());
+    } else {  
+        printf("Soy el proceso padre con PID: %d y mi hijo es: %d\n", getpid(), pid);
+    }
+
+    return 0;
+}
+```
+ **Salida esperada:**  
+```
+Soy el proceso padre con PID: 1234 y mi hijo es: 1235  
+Soy el proceso hijo con PID: 1235  
+```
+Se crean dos procesos: el padre y el hijo, cada uno con su propio PID.
+
+## `wait()` – Esperar a que termine un proceso hijo  
+ **¿Qué hace?**  
+`wait()` **hace que el proceso padre espere** hasta que su proceso hijo termine.  
+
+**Para entenderlo mejor imaginá: Un padre esperando a su hijo en la escuela**  
+- Un padre deja a su hijo en la escuela y no puede irse hasta que el niño salga de clases.  
+- **El padre (proceso principal) espera al hijo (proceso secundario) antes de continuar.**  
+
+ **Ejemplo en C**  
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+int main() {
+    int pid = fork();
+
+    if (pid == 0) {  // Proceso hijo
+        printf("Proceso hijo (PID %d) ejecutándose...\n", getpid());
+        sleep(2);
+        printf("Proceso hijo terminado.\n");
+        exit(0);
+    } else {  // Proceso padre
+        printf("Esperando a que el hijo termine...\n");
+        wait(NULL);  // Espera a que el hijo termine
+        printf("El proceso hijo ha terminado.\n");
+    }
+
+    return 0;
+}
+```
+ **Salida esperada:**  
+```
+Esperando a que el hijo termine...  
+Proceso hijo (PID 1235) ejecutándose...  
+Proceso hijo terminado.  
+El proceso hijo ha terminado.  
+```
+El proceso padre no continúa hasta que el hijo termina.
+
+
+
+## `exec(filename, argv)` – Ejecutar un nuevo programa en el mismo proceso 
+**¿Qué hace?**  
+`exec()` **reemplaza el proceso actual con otro programa**.  
+
+**Para entenderlo mejor imaginá: Cambiar de ropa en lugar de clonarte**  
+- `fork()` es como **clonar una persona**.  
+- `exec()` es como **quitarte la ropa y ponerte otra completamente diferente**. Sigues siendo la misma persona, pero te ves distinto.  
+- **El proceso no cambia su PID, pero su contenido es completamente nuevo.**  
+
+ **Ejemplo en C – Ejecutar `ls -l` dentro del proceso actual**  
+```c
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+    char *args[] = {"ls", "-l", NULL};  // Comando a ejecutar
+    printf("Ejecutando ls -l...\n");
+    execvp("ls", args);
+
+    // Si execvp() funciona correctamente, esta línea nunca se ejecuta
+    printf("Esto no debería imprimirse.\n");
+    return 0;
+}
+```
+ **Salida esperada:**  
+```
+Ejecutando ls -l...  
+(total de archivos en el directorio)  
+```
+El proceso original desaparece y es reemplazado por `ls -l`. 
+
+
+
+## `exit()` – Terminar un proceso 
+ **¿Qué hace?**  
+`exit()` finaliza un proceso y devuelve un código de salida.  
+
+**Para entenderlo mejor imaginá: Cerrar sesión en una computadora**  
+- Cuando terminas de usar la PC, **cierras sesión** y liberas los recursos.  
+- Un proceso hace lo mismo con `exit()`: **libera la memoria y notifica al SO que terminó.**  
+
+**Ejemplo en C**  
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    printf("Este proceso va a terminar ahora.\n");
+    exit(0);
+}
+```
+**Salida esperada:**  
+```
+Este proceso va a terminar ahora.
+```
+El proceso termina correctamente y libera los recursos.
+
+
+
+## `kill(pid)` – Enviar una señal a un proceso (como terminarlo)  
+ **¿Qué hace?**  
+`kill(pid, SIGTERM)` envía una señal para **terminar un proceso específico**.  
+
+**Para entenderlo mejor imaginá:Un árbitro sacando una tarjeta roja en un partido**  
+- Si un jugador (proceso) **se porta mal**, el árbitro (SO) **le da una tarjeta roja (señal) y lo expulsa (mata el proceso)**.  
+
+ **Ejemplo en C – Terminar un proceso hijo**  
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+int main() {
+    int pid = fork();
+
+    if (pid == 0) {  // Proceso hijo
+        printf("Proceso hijo ejecutándose (PID %d)\n", getpid());
+        while (1);  // Bucle infinito
+    } else {  // Proceso padre
+        sleep(2);
+        printf("Terminando proceso hijo...\n");
+        kill(pid, SIGTERM);  // Mata al hijo
+    }
+
+    return 0;
+}
+```
+ **Salida esperada:**  
+```
+Proceso hijo ejecutándose (PID 1234)  
+Terminando proceso hijo...  
+```
+El proceso padre envía una señal para matar al hijo. 
+
+
+
+## `pipe()` – Comunicación entre procesos  
+ **¿Qué hace?**  
+`pipe()` crea un **canal de comunicación unidireccional** entre dos procesos.  
+
+ **Para entenderlo mejor imaginá: Un tubo de mensajes**  
+- Imagina dos habitaciones separadas 🏠.  
+- Hay **un tubo** por el que puedes enviar mensajes de una habitación a otra.  
+- Un proceso escribe en un extremo del **pipe**, y el otro proceso lo lee en el otro extremo.  
+
+ **Ejemplo en C**  
+```c
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+    int fds[2];
+    pipe(fds);  // Crear un pipe
+
+    int pid = fork();
+
+    if (pid == 0) {  // Proceso hijo
+        close(fds[0]);  // Cierra lectura
+        char mensaje[] = "Hola desde el hijo";
+        write(fds[1], mensaje, sizeof(mensaje));  // Escribe en el pipe
+        close(fds[1]);  
+    } else {  // Proceso padre
+        close(fds[1]);  // Cierra escritura
+        char buffer[100];
+        read(fds[0], buffer, sizeof(buffer));  // Lee mensaje
+        printf("Padre recibió: %s\n", buffer);
+        close(fds[0]);  
+    }
+
+    return 0;
+}
+```
+ **Salida esperada:**  
+```
+Padre recibió: Hola desde el hijo
+```
+El hijo escribe en el pipe y el padre lo lee.  
+ 
+## Para entender el comportamiento de `dup()` y `dup2()` – imaginemos El buzón de cartas   
+
+Imaginá que en un edificio hay **tres buzones de correo** donde llegan cartas:  
+-  **Buzón 0** → Recibe las cartas que la gente envía (Entrada estándar – `stdin`).  
+-  **Buzón 1** → Envía las cartas que se envían normalmente (Salida estándar – `stdout`).  
+-  **Buzón 2** → Recibe cartas con quejas o problemas (Salida de errores – `stderr`).  
+
+Ahora, imagina que queremos hacer **copias o redirigir estos buzones** a otro lugar.  
+
+---
+
+###  `dup()` – Hacer una copia automática de un buzón  
+ `dup(fd)` **duplica un buzón en otro vacío automáticamente**. Ejemplo:  
+- Tienes el **buzón 1** (`stdout`) donde normalmente se dejan cartas.  
+- Quieres hacer una **copia de ese buzón**, pero el **cartero elige automáticamente el primer buzón vacío** para la copia.  
+
+- **Código en C**  
+```c
+int nuevo_fd = dup(1);  // Copia stdout en el primer FD libre
+```
+- **Ejemplo real:**  
+  - **El SO encuentra el primer buzón vacío** (ejemplo: `FD = 3`).  
+  - Ahora **todo lo que envíes a `FD 1` también se podrá enviar a `FD 3`**.  
+
+ 
+Antes de `dup(1)`:  
+```
+FD 0 → stdin  (teclado)
+FD 1 → stdout (pantalla)
+FD 2 → stderr (pantalla)
+FD 3 → (vacío)
+```
+Después de `dup(1)`, ahora `FD 3` también es `stdout`:  
+```
+FD 0 → stdin  (teclado)
+FD 1 → stdout (pantalla)
+FD 2 → stderr (pantalla)
+FD 3 → stdout (pantalla)
+```
+Ambos FD apuntan a la pantalla, y los dos sirven para escribir allí. 
+
+ **Ejemplo en C:**  
+```c
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+    int fd_copia = dup(1);  // Copia stdout (FD 1) en el primer FD libre
+    printf("Este mensaje va a stdout (pantalla)\n");
+    write(fd_copia, "Este mensaje también va a stdout\n", 34);
+    return 0;
+}
+```
+ **Salida esperada en la terminal:**  
+```
+Este mensaje va a stdout (pantalla)
+Este mensaje también va a stdout
+```
+Ambos FD (`1` y `fd_copia`) apuntan a la pantalla.  
+
+---
+
+###  `dup2()` – Copiar un buzón en un número específico 
+ `dup2(old_fd, new_fd)` **duplica un FD pero en un número específico**. Ejemplo: 
+- Tienes el **buzón 1 (`stdout`)**, pero ahora **quieres que el buzón 5 reciba la misma información**.  
+- **Con `dup2(1, 5)`, ahora `FD 5` también actúa como `stdout`**.  
+- **Si `FD 5` ya estaba en uso, se borra antes de redirigirlo**.  
+
+ 
+Antes de `dup2(1, 5)`:  
+```
+FD 0 → stdin  (teclado)
+FD 1 → stdout (pantalla)
+FD 2 → stderr (pantalla)
+FD 5 → archivo.txt
+```
+Después de `dup2(1, 5)`, ahora `FD 5` apunta a la pantalla:  
+```
+FD 0 → stdin  (teclado)
+FD 1 → stdout (pantalla)
+FD 2 → stderr (pantalla)
+FD 5 → stdout (pantalla)
+```
+Ahora `FD 5` también actúa como `stdout` y los mensajes que iban a `FD 1` pueden ir a `FD 5`.  
+
+ **Ejemplo en C – Redirigir `stdout` a un archivo**  
+```c
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main() {
+    int fd = open("output.txt", O_CREAT | O_WRONLY | O_TRUNC, 0644);
+
+    dup2(fd, 1);  // Ahora stdout (FD 1) se dirige a output.txt
+
+    printf("Este mensaje se guardará en output.txt\n");  // Se escribe en el archivo, no en pantalla
+
+    close(fd);
+    return 0;
+}
+```
+ **Salida esperada en `output.txt` (no en pantalla):**  
+```
+Este mensaje se guardará en output.txt
+```
+Ya no se imprime en la pantalla, sino en el archivo.  
+
+---
+
+###  Diferencias clave entre `dup()` y `dup2()`
+| **Función** | **¿Qué hace?** | **Ejemplo** |
+|------------|---------------|------------|
+| `dup(fd)` | Duplica `fd` en el **primer número disponible**. | `dup(1) → 3` |
+| `dup2(fd, 5)` | Duplica `fd` en `5` (cierra `5` si ya estaba en uso). | `dup2(1, 5) // Redirige stdout a 5` |
+
+---
+
+### Analogía Final – Comparando `dup()` y `dup2()`**
+| **Función** | **Analogía (Buzón de cartas 📬)** |
+|------------|----------------------------------|
+| `dup(fd)` | Copias una carta a otro buzón, pero **el cartero elige el buzón vacío** más cercano. |
+| `dup2(fd, 5)` | Copias una carta a **un buzón específico** (si el buzón `5` tenía cartas, las destruye antes). |
+
+---
+
+### En conclusion:
+- `dup(fd)` → **Copia un FD al primer número libre disponible.**  
+- `dup2(fd, new_fd)` → **Copia un FD en `new_fd` específicamente, reemplazándolo si ya estaba en uso.**  
+- **Se usan mucho en redirecciones de entrada/salida en procesos.**  
+
+ **Ejemplo real:**  
+Si ejecutás en la terminal:  
+```bash
+ls -l > salida.txt 2>&1
+```
+- **Equivalente en C:**  
+```c
+int fd = open("salida.txt", O_CREAT | O_WRONLY, 0644);
+dup2(fd, 1);  // stdout → salida.txt
+dup2(fd, 2);  // stderr → salida.txt
+close(fd);
+```
+Redirige stdout y stderr a `salida.txt`.  
+
+---
+
