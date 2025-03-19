@@ -15,9 +15,9 @@ Proceso Padre                   Proceso Hijo
 - `fds[1]` → Extremo de **escritura**.  
 - `fds[0]` → Extremo de **lectura**.  
 
----
 
-##  Código con `pipe()`
+
+###  Código con `pipe()`:
 ```c
 #include <stdio.h>
 #include <unistd.h>
@@ -46,7 +46,7 @@ int main() {
 ```
 
 
-#  Explicación paso a paso
+###  Explicación paso a paso:
 
 **1. Se crea un pipe**
  `pipe(fds);`  
@@ -70,7 +70,6 @@ Padre (PID 1001)                  Hijo (PID 1002)
   fds[1] (escritura)               fds[1] (escritura)
 ```
 
----
 
 **3. Cierre de extremos innecesarios**
 Cada proceso **cierra el extremo del pipe que no usa**:  
@@ -94,7 +93,7 @@ Padre (PID 1001)                  Hijo (PID 1002)
     - **El hijo escribe en `fds[1]`**.  
     - **El padre lee desde `fds[0]`**.  
 
----
+
 
  **4. El proceso hijo escribe en el pipe**
  **En el proceso hijo:**  
@@ -106,7 +105,7 @@ close(fds[1]);  // Cerramos el extremo de escritura después de escribir
 - **El mensaje "Hola desde el hijo" se almacena en el pipe** (buffer interno del SO).  
 - **Luego, el hijo cierra `fds[1]` porque ya no necesita escribir más.**  
 
----
+
 
 **5. El proceso padre lee del pipe**
  **En el proceso padre:**  
@@ -125,7 +124,7 @@ Padre recibió: Hola desde el hijo
 ```
 La comunicación se completó exitosamente.  
 
----
+
 
 **Resumen gráfico del flujo**
 1. **El padre crea un pipe.**  
@@ -144,7 +143,6 @@ Proceso Hijo                            Proceso Padre
 ```
 Se logra la comunicación entre procesos usando `pipe()`. 
 
----
 
 **¿Qué pasa si el orden de `read()` y `write()` cambia?**  
 - **Si el padre intenta leer antes de que el hijo escriba**, el proceso padre se **queda esperando** (`bloqueado`) hasta que el hijo escriba.  
@@ -152,7 +150,6 @@ Se logra la comunicación entre procesos usando `pipe()`.
 
 Por eso, siempre es importante **asegurar el orden correcto** en los procesos.  
 
----
 
 **Variación: Comunicación bidireccional con dos pipes**
 Si queremos que **el hijo y el padre se envíen datos entre sí**, necesitamos **dos pipes**.  
