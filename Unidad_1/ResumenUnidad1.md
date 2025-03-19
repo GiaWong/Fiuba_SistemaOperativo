@@ -208,7 +208,7 @@ Soy el proceso hijo con PID: 12346
 ```
 Aquí se ve cómo el proceso padre crea un **proceso hijo**, y ambos imprimen su propio PID.  
 
----
+
 
 ### Entonces queda claro que:  
 - **Un proceso es un programa en ejecución.**  
@@ -220,10 +220,8 @@ Aquí se ve cómo el proceso padre crea un **proceso hijo**, y ambos imprimen su
 **Ejemplo práctico:**  
 Cada pestaña de tu navegador es un **proceso separado**, para que si una falla, no cierre todo el navegador.  
 
----
 
-
-# File Descriptors y Process Table 
+## File Descriptors y Process Table 
 Ahora vamos a ver dos conceptos clave en la gestión de procesos:  
 
 - **File Descriptor (FD)** → Maneja archivos y recursos en un proceso.  
@@ -267,7 +265,7 @@ echo "Hola" > salida.txt
 
 - **Con esto, stdout en lugar de imprimir en pantalla, escribe en el archivo**  
 
-📌 **Comprobación en C**  
+ **Comprobación en C**  
 ```c
 #include <stdio.h>
 #include <unistd.h>
@@ -348,7 +346,7 @@ Process Table
   - Guarda datos como **PID, memoria usada, estado y File Descriptors abiertos**.  
   - Es usada por el sistema operativo para **gestionar y planificar procesos**.  
 
----
+
 ### System Calls más importantes
 Los system calls permiten a los programas solicitar servicios del sistema operativo.
 
@@ -357,7 +355,7 @@ Los system calls permiten a los programas solicitar servicios del sistema operat
  **¿Qué hace?**  
 `fork()` crea un **proceso hijo** idéntico al proceso padre, pero con un **nuevo PID**. Ambos procesos ejecutan el mismo código, pero con PIDs diferentes.  
 
- **Para entenderlo mejor imaginá: Clonar un chef en la cocina 👨‍🍳👨‍🍳**  
+ **Para entenderlo mejor imaginá: Clonar un chef en la cocina**  
 - Imagina que hay **un solo chef** en un restaurante, cocinando platos.  
 - De repente, el chef **clona una copia exacta de sí mismo**. Ahora hay **dos chefs trabajando al mismo tiempo**, pero con pequeñas diferencias (uno puede empezar a hacer postres mientras el otro sigue con los platos principales).  
 
@@ -530,7 +528,7 @@ El proceso padre envía una señal para matar al hijo.
 `pipe()` crea un **canal de comunicación unidireccional** entre dos procesos.  
 
  **Para entenderlo mejor imaginá: Un tubo de mensajes**  
-- Imagina dos habitaciones separadas 🏠.  
+- Imagina dos habitaciones separadas.  
 - Hay **un tubo** por el que puedes enviar mensajes de una habitación a otra.  
 - Un proceso escribe en un extremo del **pipe**, y el otro proceso lo lee en el otro extremo.  
 
@@ -627,7 +625,7 @@ Este mensaje también va a stdout
 ```
 Ambos FD (`1` y `fd_copia`) apuntan a la pantalla.  
 
----
+
 
 ###  `dup2()` – Copiar un buzón en un número específico 
  `dup2(old_fd, new_fd)` **duplica un FD pero en un número específico**. Ejemplo: 
@@ -686,7 +684,7 @@ Ya no se imprime en la pantalla, sino en el archivo.
 ---
 
 ### Analogía Final – Comparando `dup()` y `dup2()`**
-| **Función** | **Analogía (Buzón de cartas 📬)** |
+| **Función** | **Analogía (Buzón de cartas)** |
 |------------|----------------------------------|
 | `dup(fd)` | Copias una carta a otro buzón, pero **el cartero elige el buzón vacío** más cercano. |
 | `dup2(fd, 5)` | Copias una carta a **un buzón específico** (si el buzón `5` tenía cartas, las destruye antes). |
